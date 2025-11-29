@@ -1,0 +1,51 @@
+{
+  "schema": {
+    "type":"object",
+    "properties":{
+      "invoice_id":{"type":["string","null"]},
+      "currency":{"type":["string","null"]},
+      "pages": {
+        "type":"array",
+        "items": {
+          "type":"object",
+          "properties": {
+            "page_no": {"type":"integer"},
+            "page_type": {"type":["string","null"]},
+            "line_items": {
+              "type":"array",
+              "items": {
+                "type":"object",
+                "properties": {
+                  "description": {"type":"string"},
+                  "quantity": {"type":["number","null"]},
+                  "unit_price": {"type":["number","null"]},
+                  "line_total": {"type":"number"},
+                  "position": {"type":["integer","null"]},
+                  "confidence": {"type":["number","null"], "minimum": 0, "maximum": 1}
+                },
+                "required":["description","line_total"]
+              }
+            },
+            "sub_totals": {
+              "type":"array",
+              "items": {
+                "type":"object",
+                "properties": {
+                  "label": {"type":["string","null"]},
+                  "amount": {"type":"number"}
+                },
+                "required":["amount"]
+              }
+            }
+          },
+          "required":["page_no","line_items"]
+        }
+      },
+      "final_total_reported":{"type":["number","null"]},
+      "computed_final_total":{"type":"number"},
+      "issues":{"type":["array","null"]}
+    },
+    "required":["pages","computed_final_total"]
+  },
+  "prompt": "You are an invoice extraction agent. Input: a document (PDF/image/text). RETURN ONLY JSON that validates against the provided schema. RULES:\\n1) Return JSON only; no extra text.\\n2) Extract all unique line items (do not double-count repeated lines).\\n3) Provide page-wise items in pages[]. Each page must have page_no (int) and line_items.\\n4) For each line item include description (exact as in bill), quantity (if present), unit_price (if present), and line_total (numeric).\\n5) computed_final_total = sum of deduplicated line_items.line_total.\\n6) Put any printed invoice total in final_total_reported (or null).\\n7) Put subtotals into page.sub_totals[] if present.\\n8) Use numeric values (no currency symbols) for amounts, two-decimal precision.\\n9) If unsure, include best-guess and add a short note in issues[].\\n10) Dedupe rule: treat two items as duplicates if textual similarity >= 0.85 AND absolute difference in amounts <= 0.01. If duplicate, keep one instance.\\n\\nFEW-SHOT EXAMPLES (short):\\n1) Input page text:\\n\\\"Blue Widget 2 50.00 100.00\\nRed Widget 1 75.50 75.50\\nTotal: 175.50\\\"\\nOutput: {\\n  \\\"invoice_id\\\": null,\\n  \\\"currency\\\": null,\\n  \\\"pages\\\": [{\\n     \\\"page_no\\\": 1,\\n     \\\"page_type\\\": \\\"Bill Detail\\\",\\n     \\\"line_items\\\": [\\n        {\\\"description\\\":\\\"Blue Widget\\\",\\\"quantity\\\":2,\\\"unit_price\\\":50.00,\\\"line_total\\\":100.00,\\\"position\\\":1,\\\"confidence\\\":0.98},\\n        {\\\"description\\\":\\\"Red Widget\\\",\\\"quantity\\\":1,\\\"unit_price\\\":75.50,\\\"line_total\\\":75.50,\\\"position\\\":2,\\\"confidence\\\":0.98}\\n     ],\\n     \\\"sub_totals\\\": []\\n  }],\\n  \\\"final_total_reported\\\":175.50,\\n  \\\"computed_final_total\\\":175.50,\\n  \\\"issues\\\": null\\n}\\n"
+}
