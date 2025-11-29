@@ -1,0 +1,9 @@
+{
+  "name": "medical-bill-parser",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "form-data": "^4.0.0",
+    "node-fetch": "^2.6.7"
+  }
+}
